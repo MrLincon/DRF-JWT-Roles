@@ -4,24 +4,44 @@ Data Format: JSON
 
 Endpoints:
 
-    Register User (POST /register):
+```
+Register (POST /register):
 
-        Request Body: 
+Request Body:
+{
+    "email": "user@email.com",
+    "password": "strong_password"
+}
+```
 
-    ```json
-    { "email": "user@email.com", "password": "strong_password" }
-    ```
+```
 
-    Register Admin User (POST /register-admin): (Potentially Restricted)
+Register Admin (POST /register-admin): (Potentially Restricted)
 
-        Request Body: { "email": "admin@email.com", "password": "strong_password" }
+Request Body:
+{
+    "email": "admin@email.com",
+    "password": "strong_password"
+}
+```
 
+```
+Login (POST /login):
 
-    Login (POST /login):
+Request Body:
+{
+    "email": "user@email.com",
+    "password": "user_password"
+}
+```
 
-        Request Body: { "email": "user@email.com", "password": "user_password" }
+```
+Change Password (POST /change-password): (Requires Authentication)
 
-
-    Change Password (POST /change-password): (Requires Authentication)
-
-        Request Body: { "email": "user@email.com", "old_password": "current_password", "new_password": "new_strong_password" }
+Request Body:
+{
+    "email": "user@email.com",
+    "old_password": "current_password",
+    "new_password": "new_strong_password"
+}
+```
