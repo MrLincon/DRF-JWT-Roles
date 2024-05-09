@@ -8,7 +8,7 @@ Data Format: JSON
 # Endpoints:
 
 
-### `Register (POST /register):`
+> `Register (POST /register)`
 
 ```json
 {
@@ -17,7 +17,7 @@ Data Format: JSON
 }
 ```
 
-### `Register Admin (POST /register-admin): (Potentially Restricted)`
+> `Register Admin (POST /register-admin): (Potentially Restricted)`
 
 ```json
 {
@@ -26,7 +26,7 @@ Data Format: JSON
 }
 ```
 
-### `Login (POST /login):`
+> `Login (POST /login)`
 
 ```json
 {
@@ -36,7 +36,7 @@ Data Format: JSON
 ```
 
 
-### `Change Password (POST /change-password): (Requires Authentication)`
+> `Change Password (POST /change-password): (Requires Authentication)`
 
 ```json
 {
