@@ -71,3 +71,26 @@ class PasswordChangeSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return user
+
+class UpdateRoleSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(choices=User.ROLE_CHOICES)
+
+    def validate_email(self, value):
+        user = self.context['request'].user
+        if value != user.email:
+            raise serializers.ValidationError("Invalid email for the provided token!")
+        return value
+
+    def validate_role(self, value):
+        if value not in dict(User.ROLE_CHOICES).keys():
+            raise serializers.ValidationError("Invalid role!")
+        return value
+
+    def validate(self, data):
+        email = data.get('email')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist.")
+        return data

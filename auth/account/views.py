@@ -4,8 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import User
 from .serializers import UserRegistrationSerializer, SuperUserRegistrationSerializer, UserLoginSerializer, \
-    PasswordChangeSerializer
+    PasswordChangeSerializer, UpdateRoleSerializer
 
 
 class UserRegistrationView(APIView):
@@ -101,3 +103,31 @@ class PasswordChangeView(APIView):
 
             return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class UpdateRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serializer = UpdateRoleSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            role = serializer.validated_data['role']
+            try:
+                user = User.objects.get(email=email)
+                print(user.role)
+                user.role = role
+                user.save()
+
+                response = {
+                    'message': 'Role updated successfully',
+                    'data': {},
+                }
+
+                return Response(response, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+
+                response = {
+                    'message': 'User not found',
+                    'data': {},
+                }
+
+                return Response(response, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
