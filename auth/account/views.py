@@ -19,15 +19,21 @@ class UserRegistrationView(APIView):
         valid = serializer.is_valid(raise_exception=True)
 
         if valid:
-            serializer.save()
-            status_code = status.HTTP_201_CREATED
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
 
             response = {
                 'message': 'User successfully registered!',
-                'data': {},
+                'data': {
+                    'uid': user.uid,
+                    'email': user.email,
+                    'role': user.role,
+                    'access': access_token
+                },
             }
 
-            return Response(response, status=status_code)
+            return Response(response, status=status.HTTP_201_CREATED)
 
 
 class SuperUserRegistration(APIView):
@@ -40,14 +46,13 @@ class SuperUserRegistration(APIView):
 
         if valid:
             serializer.save()
-            status_code = status.HTTP_201_CREATED
 
             response = {
                 'message': 'User successfully registered!',
                 'data': {},
             }
 
-            return Response(response, status=status_code)
+            return Response(response, status=status.HTTP_201_CREATED)
 
 
 class UserLoginView(APIView):
@@ -64,6 +69,7 @@ class UserLoginView(APIView):
             response = {
                 'message': 'Login successful!',
                 'data': {
+                    'uid': user.uid,
                     'email': user.email,
                     'role': user.role,
                     'access': access_token
@@ -103,22 +109,39 @@ class PasswordChangeView(APIView):
 
             return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class UpdateRoleView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = UpdateRoleSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            email = serializer.validated_data['email']
+            uid = serializer.validated_data['uid']
             role = serializer.validated_data['role']
+
+            if role == User.ADMIN:
+                response = {
+                    'message': 'You can not set role to admin!',
+                    'data': {},
+                }
+                return Response(response, status=status.HTTP_403_FORBIDDEN)
+
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(uid=uid)
                 print(user.role)
                 user.role = role
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
                 user.save()
 
                 response = {
                     'message': 'Role updated successfully',
-                    'data': {},
+                    'data': {
+                        'uid': user.uid,
+                        'email': user.email,
+                        'role': user.role,
+                        'access': access_token
+                    },
                 }
 
                 return Response(response, status=status.HTTP_200_OK)
