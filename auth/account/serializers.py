@@ -72,30 +72,24 @@ class PasswordChangeSerializer(serializers.Serializer):
         user.save()
         return user
 
-
 class UpdateRoleSerializer(serializers.Serializer):
     uid = serializers.UUIDField()
     role = serializers.ChoiceField(choices=User.ROLE_CHOICES)
 
-    def validate_uid(self, value):
-        user = self.context['request'].user
-
-        if value != user.uid:
-            raise serializers.ValidationError("Invalid uid for the provided token!")
-
-        return value
-
     def validate_role(self, value):
-        if value not in dict(User.ROLE_CHOICES).keys():
+        if value not in dict(User.ROLE_CHOICES):
             raise serializers.ValidationError("Invalid role!")
         return value
 
     def validate(self, data):
         uid = data.get('uid')
-
         try:
-            User.objects.get(uid=uid)
+            user = User.objects.get(uid=uid)
         except User.DoesNotExist:
-
             raise serializers.ValidationError("User with this uid does not exist!")
+        self.validate_permissions(user, self.context.get('request'))
         return data
+
+    def validate_permissions(self, user, request):
+        if request and request.user.role not in [User.ADMIN, User.MANAGER]:
+            raise serializers.ValidationError("Only admins and managers can update role!")

@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserRegistrationSerializer, SuperUserRegistrationSerializer, UserLoginSerializer, \
     PasswordChangeSerializer, UpdateRoleSerializer
+from .permissions import IsAdmin, IsManager
 
 
 class UserRegistrationView(APIView):
@@ -45,11 +46,18 @@ class SuperUserRegistration(APIView):
         valid = serializer.is_valid(raise_exception=True)
 
         if valid:
-            serializer.save()
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
 
             response = {
                 'message': 'User successfully registered!',
-                'data': {},
+                'data': {
+                    'uid': user.uid,
+                    'email': user.email,
+                    'role': user.role,
+                    'access': access_token
+                },
             }
 
             return Response(response, status=status.HTTP_201_CREATED)
@@ -111,46 +119,40 @@ class PasswordChangeView(APIView):
 
 
 class UpdateRoleView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdmin, IsManager]
 
     def post(self, request):
         serializer = UpdateRoleSerializer(data=request.data, context={'request': request})
+
         if serializer.is_valid():
+
             uid = serializer.validated_data['uid']
             role = serializer.validated_data['role']
 
             if role == User.ADMIN:
-                response = {
-                    'message': 'You can not set role to admin!',
-                    'data': {},
-                }
-                return Response(response, status=status.HTTP_403_FORBIDDEN)
+                return Response({'message': 'You cannot set role to admin!'}, status=status.HTTP_403_FORBIDDEN)
+
+            if role == User.MANAGER:
+                return Response({'message': 'You cannot set role to manager!'}, status=status.HTTP_403_FORBIDDEN)
 
             try:
                 user = User.objects.get(uid=uid)
-                print(user.role)
                 user.role = role
-                refresh = RefreshToken.for_user(user)
-                access_token = str(refresh.access_token)
                 user.save()
-
-                response = {
+                response_data = {
                     'message': 'Role updated successfully',
                     'data': {
                         'uid': user.uid,
                         'email': user.email,
                         'role': user.role,
-                        'access': access_token
                     },
                 }
 
-                return Response(response, status=status.HTTP_200_OK)
+                return Response(response_data, status=status.HTTP_200_OK)
+
             except User.DoesNotExist:
+                response_data = {'message': 'User not found', 'data': {}}
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-                response = {
-                    'message': 'User not found',
-                    'data': {},
-                }
-
-                return Response(response, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
