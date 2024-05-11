@@ -5,6 +5,15 @@ This is a DRF project. It only has authentication part. It has jwt authenticatio
 
 Data Format: JSON
 
+# Roles:
+> `Admin - 1`
+
+> `Manager - 2`
+
+> `Employee - 3`
+
+> `User - 4`
+
 # Endpoints:
 
 
@@ -35,7 +44,6 @@ Data Format: JSON
 }
 ```
 
-
 > `Change Password (POST /change-password): (Requires Authentication)`
 
 ```json
@@ -43,5 +51,16 @@ Data Format: JSON
     "email": "user@email.com",
     "old_password": "current_password",
     "new_password": "new_strong_password"
+}
+```
+
+> `Update Role (POST /update-role): (Requires Authentication)`
+
+> Admin can chnage every role, Manager can change roles of Employee and User
+
+```json
+{
+    "uid" : "efa691fef3b84a5c8e414275a439ce0b",
+    "role": "3"
 }
 ```
